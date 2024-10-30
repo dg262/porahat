@@ -1,0 +1,192 @@
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet author="DanielG" id="1">
+        <createTable tableName="flowers">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="name" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="DanielG" id="2">
+        <createTable tableName="products">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="name" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="text"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="DanielG" id="3">
+        <createTable tableName="events">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="name" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="date" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="phone" type="varchar(15)"/>
+            <column name="email" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="address" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="text"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="DanielG" id="4">
+        <createTable tableName="flower_package_options">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="flower_id" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="num_of_flowers" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="price" type="int">
+                <constraints nullable="false"/>
+        </createTable>
+
+        <!-- Add unique constraint for FlowerPackageOptions -->
+        <addUniqueConstraint
+            tableName="flower_package_options"
+            columnNames="flower_id"
+            constraintName="unique_flower_num"/>
+
+        <!-- Add index on flower_id for better performance -->
+        <createIndex indexName="idx_flower_id" tableName="flower_package_options">
+            <column name="flower_id"/>
+    </changeSet>
+
+    <changeSet author="DanielG" id="5">
+        <createTable tableName="flower_in_product">
+            <column name="flower_id" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="product_id" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="num_of_flowers" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Add unique constraint for FlowerInProduct -->
+        <addUniqueConstraint
+            tableName="flower_in_product"
+            columnNames="flower_id, product_id"
+            constraintName="unique_flower_product"/>
+
+        <!-- Add index on flower_id for better performance -->
+        <createIndex indexName="idx_flower_id" tableName="flower_in_product">
+            <column name="flower_id"/>
+        </createIndex>
+
+        <!-- Add index on product_id for better performance -->
+        <createIndex indexName="idx_product_id" tableName="flower_in_product">
+            <column name="product_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet author="DanielG" id="6">
+        <createTable tableName="event_product">
+            <column name="event_id" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="product_id" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quantity" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Add unique constraint for EventProduct -->
+        <addUniqueConstraint
+            tableName="event_product"
+            columnNames="event_id, product_id"
+            constraintName="unique_event_product"/>
+
+        <!-- Add index on event_id for better performance -->
+        <createIndex indexName="idx_event_id" tableName="event_product">
+            <column name="event_id"/>
+        </createIndex>
+
+        <!-- Add index on product_id for better performance -->
+        <createIndex indexName="idx_product_id" tableName="event_product">
+            <column name="product_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Add foreign key constraint on flower_id with CASCADE on delete for flower_in_product -->
+    <changeSet author="DanielG" id="7">
+        <addForeignKeyConstraint
+            baseTableName="flower_in_product"
+            baseColumnNames="flower_id"
+            referencedTableName="flowers"
+            referencedColumnNames="id"
+            onDelete="CASCADE"
+            constraintName="fk_flower_in_product_flower"/>
+    </changeSet>
+
+    <!-- Add foreign key constraint on product_id with CASCADE on delete for flower_in_product -->
+    <changeSet author="DanielG" id="8">
+        <addForeignKeyConstraint
+            baseTableName="flower_in_product"
+            baseColumnNames="product_id"
+            referencedTableName="products"
+            referencedColumnNames="id"
+            onDelete="CASCADE"
+            constraintName="fk_flower_in_product_product"/>
+    </changeSet>
+
+    <!-- Add foreign key constraint on event_id with CASCADE on delete for event_product -->
+    <changeSet author="DanielG" id="9">
+        <addForeignKeyConstraint
+            baseTableName="event_product"
+            baseColumnNames="event_id"
+            referencedTableName="events"
+            referencedColumnNames="id"
+            onDelete="CASCADE"
+            constraintName="fk_event_product_event"/>
+    </changeSet>
+
+    <!-- Add foreign key constraint on product_id with CASCADE on delete for event_product -->
+    <changeSet author="DanielG" id="10">
+        <addForeignKeyConstraint
+            baseTableName="event_product"
+            baseColumnNames="product_id"
+            referencedTableName="products"
+            referencedColumnNames="id"
+            onDelete="CASCADE"
+            constraintName="fk_event_product_product"/>
+    </changeSet>
+
+    <!-- Add foreign key constraint on flower_id with CASCADE on delete for flower_package_options -->
+    <changeSet author="DanielG" id="11">
+        <addForeignKeyConstraint
+            baseTableName="flower_package_options"
+            baseColumnNames="flower_id"
+            referencedTableName="flowers"
+            referencedColumnNames="id"
+            onDelete="CASCADE"
+            constraintName="fk_flower_package_options_flower"/>
+
+</databaseChangeLog>
