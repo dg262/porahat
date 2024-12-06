@@ -19,7 +19,7 @@ func NewDalMock() persistency.DalInterface {
 	}
 }
 
-func (d *DalMock) CreateFlower(flower *persistency.Flower) error {
+func (d *DalMock) CreateFlower(flower *persistency.Flower, packingOptions *[]contracts.PackingOptions) error {
 	d.Flowers = append(d.Flowers, flower)
 	return nil
 }
@@ -105,10 +105,6 @@ func (d *DalMock) GetFilteredFlowers(req *contracts.GetFilteredFlowersRequest) (
 
 	for _, f := range d.Flowers {
 		if req.Name != "" && f.Name != req.Name {
-			continue
-		}
-
-		if req.NumOfFlowersInPackage != 0 && f.NumOfFlowersInPackage != req.NumOfFlowersInPackage {
 			continue
 		}
 

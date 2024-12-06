@@ -14,9 +14,14 @@ type ProductInEvent struct {
 	Quantity  int    `json:"quantity"`
 }
 
+type PackingOptions struct {
+	Quantity int     `validate:"required,gte=0"`
+	Price    float64 `validate:"required,gte=0"`
+}
+
 type CreateFlowerRequest struct {
-	Name                  string
-	NumOfFlowersInPackage int
+	Name           string
+	PackingOptions *[]PackingOptions
 }
 
 type CreateProductRequest struct {
@@ -34,9 +39,8 @@ type CreateEventRequest struct {
 }
 
 type EditFlowerRequest struct {
-	ID                    string
-	Name                  string
-	NumOfFlowersInPackage int
+	ID   string
+	Name string
 }
 
 type EditProductRequest struct {
@@ -57,8 +61,7 @@ type EditEventRequest struct {
 }
 
 type GetFilteredFlowersRequest struct {
-	Name                  string
-	NumOfFlowersInPackage int
+	Name string
 }
 
 type GetFilteredProductsRequest struct {

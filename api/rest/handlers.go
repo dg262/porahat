@@ -23,8 +23,8 @@ func createFlower(c *fiber.Ctx, service *servicecore.ServiceCore) error {
 	}
 
 	createFlowerRequest := &contracts.CreateFlowerRequest{
-		Name:                  createFlowerPayload.Name,
-		NumOfFlowersInPackage: createFlowerPayload.NumOfFlowersInPackage,
+		Name:           createFlowerPayload.Name,
+		PackingOptions: &createFlowerPayload.PackingOptions,
 	}
 
 	flowerID, err := service.CreateFlower(createFlowerRequest)
@@ -105,9 +105,8 @@ func editFlower(c *fiber.Ctx, service *servicecore.ServiceCore) error {
 	}
 
 	editFlowerRequest := &contracts.EditFlowerRequest{
-		ID:                    editFlowerPayload.ID,
-		Name:                  editFlowerPayload.Name,
-		NumOfFlowersInPackage: editFlowerPayload.NumOfFlowersInPackage,
+		ID:   editFlowerPayload.ID,
+		Name: editFlowerPayload.Name,
 	}
 
 	err := service.EditFlower(editFlowerRequest)
@@ -451,17 +450,17 @@ func editProductsInEvent(c *fiber.Ctx, service *servicecore.ServiceCore) error {
 	return c.SendString("products in event updated successfully")
 }
 
-func getFlowersInEvent(c *fiber.Ctx, service *servicecore.ServiceCore) error {
-	eventID := c.Params("eventID")
-	_, err := uuid.Parse(eventID)
-	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, "Invalid event ID")
-	}
+// func getFlowersInEvent(c *fiber.Ctx, service *servicecore.ServiceCore) error {
+// 	eventID := c.Params("eventID")
+// 	_, err := uuid.Parse(eventID)
+// 	if err != nil {
+// 		return fiber.NewError(fiber.StatusBadRequest, "Invalid event ID")
+// 	}
 
-	flowers, err := service.GetFlowersInEvent(eventID)
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-	}
+// 	flowers, err := service.GetFlowersInEvent(eventID)
+// 	if err != nil {
+// 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+// 	}
 
-	return c.JSON(flowers)
-}
+// 	return c.JSON(flowers)
+// }

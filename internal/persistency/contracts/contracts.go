@@ -6,15 +6,21 @@ import (
 )
 
 type Flower struct {
-	ID                    string
-	Name                  string
-	NumOfFlowersInPackage int
+	ID   string
+	Name string
 }
 
 type FlowerInProduct struct {
 	FlowerID     string
 	ProductID    string
 	NumOfFlowers int
+}
+
+type FlowerPackageOptions struct {
+	ID           string
+	FlowerID     string
+	NumOfFlowers int
+	Price        float64
 }
 
 type Product struct {
@@ -40,7 +46,7 @@ type EventProduct struct {
 }
 
 type DalInterface interface {
-	CreateFlower(flower *Flower) error
+	CreateFlower(flower *Flower, packingOptions *[]contracts.PackingOptions) error
 	CreateProduct(product *Product) error
 	CreateEvent(event *Event) error
 	EditFlower(flower *Flower) error

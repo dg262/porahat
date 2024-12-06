@@ -17,10 +17,9 @@ func NewServiceCore(dalInstance persistency.DalInterface) *ServiceCore {
 
 func (s *ServiceCore) CreateFlower(createFlowerRequest *contracts.CreateFlowerRequest) (string, error) {
 	flower := &persistency.Flower{
-		Name:                  createFlowerRequest.Name,
-		NumOfFlowersInPackage: createFlowerRequest.NumOfFlowersInPackage,
+		Name: createFlowerRequest.Name,
 	}
-	err := s.DalInstance.CreateFlower(flower)
+	err := s.DalInstance.CreateFlower(flower, createFlowerRequest.PackingOptions)
 
 	return flower.ID, err
 }
@@ -51,9 +50,8 @@ func (s *ServiceCore) CreateEvent(createEventRequest *contracts.CreateEventReque
 
 func (s *ServiceCore) EditFlower(editFlowerRequest *contracts.EditFlowerRequest) error {
 	flower := &persistency.Flower{
-		ID:                    editFlowerRequest.ID,
-		Name:                  editFlowerRequest.Name,
-		NumOfFlowersInPackage: editFlowerRequest.NumOfFlowersInPackage,
+		ID:   editFlowerRequest.ID,
+		Name: editFlowerRequest.Name,
 	}
 
 	return s.DalInstance.EditFlower(flower)
@@ -188,47 +186,47 @@ func (s *ServiceCore) EditProductsInEvent(req *contracts.AddProductsToEventReque
 	return s.DalInstance.EditProductsInEvent(req)
 }
 
-func (s *ServiceCore) GetFlowersInEvent(eventID string) ([]*contracts.GetFlowersInEventResponse, error) {
-	// check if the event exists
-	_, err := s.DalInstance.GetEvent(eventID)
-	if err != nil {
-		return nil, err
-	}
+// func (s *ServiceCore) GetFlowersInEvent(eventID string) ([]*contracts.GetFlowersInEventResponse, error) {
+// 	// check if the event exists
+// 	_, err := s.DalInstance.GetEvent(eventID)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	products, err := s.DalInstance.GetProductsFromEvent(eventID)
-	if err != nil {
-		return nil, err
-	}
+// 	products, err := s.DalInstance.GetProductsFromEvent(eventID)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	var flowersInEvent = make(map[string]int)
+// 	var flowersInEvent = make(map[string]int)
 
-	for _, product := range products {
-		flowers, err := s.DalInstance.GetFlowersFromProduct(product.ProductID)
-		if err != nil {
-			return nil, err
-		}
+// 	for _, product := range products {
+// 		flowers, err := s.DalInstance.GetFlowersFromProduct(product.ProductID)
+// 		if err != nil {
+// 			return nil, err
+// 		}
 
-		for _, flower := range flowers {
-			flowersInEvent[flower.FlowerID] = flower.NumOfFlowers
-		}
-	}
+// 		for _, flower := range flowers {
+// 			flowersInEvent[flower.FlowerID] = flower.NumOfFlowers
+// 		}
+// 	}
 
-	var response []*contracts.GetFlowersInEventResponse
-	for flowerID, numOfFlowers := range flowersInEvent {
-		flower, err := s.DalInstance.GetFlower(flowerID)
-		if err != nil {
-			return nil, err
-		}
-		numOfPackages := numOfFlowers / flower.NumOfFlowersInPackage
-		remindFlowers := numOfFlowers % flower.NumOfFlowersInPackage
-		response = append(response, &contracts.GetFlowersInEventResponse{
-			FlowerID:      flowerID,
-			NumOfFlowers:  numOfFlowers,
-			NumOfPackages: numOfPackages,
-			RemindFlowers: remindFlowers,
-		})
-	}
+// 	var response []*contracts.GetFlowersInEventResponse
+// 	for flowerID, numOfFlowers := range flowersInEvent {
+// 		flower, err := s.DalInstance.GetFlower(flowerID)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		numOfPackages := numOfFlowers / flower.NumOfFlowersInPackage
+// 		remindFlowers := numOfFlowers % flower.NumOfFlowersInPackage
+// 		response = append(response, &contracts.GetFlowersInEventResponse{
+// 			FlowerID:      flowerID,
+// 			NumOfFlowers:  numOfFlowers,
+// 			NumOfPackages: numOfPackages,
+// 			RemindFlowers: remindFlowers,
+// 		})
+// 	}
 
-	return response, nil
+// 	return response, nil
 
-}
+// }

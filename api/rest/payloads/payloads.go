@@ -6,8 +6,8 @@ import (
 )
 
 type CreateFlowerPayload struct {
-	Name                  string `validate:"required"`
-	NumOfFlowersInPackage int    `validate:"required,gte=1"`
+	Name           string                     `validate:"required"`
+	PackingOptions []contracts.PackingOptions `validate:"required,min=1,dive"`
 }
 
 type CreateProductPayload struct {
@@ -25,9 +25,8 @@ type CreateEventPayload struct {
 }
 
 type EditFlowerPayload struct {
-	ID                    string `validate:"required,uuid"`
-	Name                  string
-	NumOfFlowersInPackage int
+	ID   string `validate:"required,uuid"`
+	Name string
 }
 
 type EditProductPayload struct {

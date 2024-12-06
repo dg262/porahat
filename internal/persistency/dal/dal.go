@@ -33,24 +33,55 @@ func NewDal(ctx context.Context, dalConfig *config.DalConfig) (persistency.DalIn
 	}, nil
 }
 
-func (d *Dal) CreateFlower(flower *persistency.Flower) error {
+func (d *Dal) CreateFlower(flower *persistency.Flower, packingOptions *[]contracts.PackingOptions) error {
+	tx, err := d.pool.Begin(context.Background())
+	if err != nil {
+		return fmt.Errorf("failed to start transaction: %w", err)
+	}
+
 	flower.ID = uuid.New().String()
-	queryEnumerator, parameterEnumerator := new(parameterEnumerate).WithParameterEnumerate()
-	parameterEnumerator.AppendParameter("id", flower.ID)
-	parameterEnumerator.AppendParameter("name", flower.Name)
-	parameterEnumerator.AppendParameter("num_of_flowers_in_package", flower.NumOfFlowersInPackage)
+	flowerQueryEnumerator, flowerParameterEnumerator := new(parameterEnumerate).WithParameterEnumerate()
+	flowerParameterEnumerator.AppendParameter("id", flower.ID)
+	flowerParameterEnumerator.AppendParameter("name", flower.Name)
 
 	// Construct the SQL query
 	query := fmt.Sprintf(
 		"INSERT INTO flowers (%s) VALUES (%s)",
-		parameterEnumerator.GetColumns(),
-		parameterEnumerator.GetParameters(),
+		flowerParameterEnumerator.GetColumns(),
+		flowerParameterEnumerator.GetParameters(),
 	)
 
 	// Execute the query
-	_, err := d.pool.Exec(context.Background(), query, queryEnumerator.args...)
+	_, err = tx.Exec(context.Background(), query, flowerQueryEnumerator.args...)
 	if err != nil {
+		tx.Rollback(context.Background())
 		return fmt.Errorf("failed to create flower: %w", err)
+	}
+
+	for _, packingOption := range *packingOptions {
+		packingOptionQueryEnumerator, packingOptionParameterEnumerator := new(parameterEnumerate).WithParameterEnumerate()
+		packingOptionParameterEnumerator.AppendParameter("flower_id", flower.ID)
+		packingOptionParameterEnumerator.AppendParameter("num_of_flowers", packingOption.Quantity)
+		packingOptionParameterEnumerator.AppendParameter("price", packingOption.Price)
+
+		// Construct the SQL query
+		packingOptionQuery := fmt.Sprintf(
+			"INSERT INTO flower_package_options (%s) VALUES (%s)",
+			packingOptionParameterEnumerator.GetColumns(),
+			packingOptionParameterEnumerator.GetParameters(),
+		)
+
+		// Execute the query
+		_, err = tx.Exec(context.Background(), packingOptionQuery, packingOptionQueryEnumerator.args...)
+		if err != nil {
+			tx.Rollback(context.Background())
+			return fmt.Errorf("failed to create packing option: %w", err)
+		}
+	}
+
+	err = tx.Commit(context.Background())
+	if err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	return nil
@@ -112,7 +143,6 @@ func (d *Dal) EditFlower(flower *persistency.Flower) error {
 
 	// Append parameters to the enumerator
 	parameterEnumerator.AppendParameter("name", flower.Name)
-	parameterEnumerator.AppendParameter("num_of_flowers_in_package", flower.NumOfFlowersInPackage)
 
 	// Construct the SQL query
 	query := fmt.Sprintf(
@@ -250,7 +280,6 @@ func (d *Dal) GetFilteredFlowers(req *contracts.GetFilteredFlowersRequest) ([]*p
 	enumerator := &parameterEnumerate{}
 
 	query += enumerator.CreateLikeCondition("name", req.Name)
-	query += enumerator.CreateExactCondition("num_of_flowers_in_package", req.NumOfFlowersInPackage)
 
 	// Prepare the query with parameters
 	rows, err := d.pool.Query(context.Background(), query, enumerator.args...)
@@ -264,7 +293,7 @@ func (d *Dal) GetFilteredFlowers(req *contracts.GetFilteredFlowersRequest) ([]*p
 	// Scan the results into a slice of Flower
 	for rows.Next() {
 		var flower persistency.Flower
-		if err := rows.Scan(&flower.ID, &flower.Name, &flower.NumOfFlowersInPackage); err != nil {
+		if err := rows.Scan(&flower.ID, &flower.Name); err != nil {
 			return nil, fmt.Errorf("failed to scan flower: %w", err)
 		}
 		flowers = append(flowers, &flower)
@@ -357,7 +386,7 @@ func (d *Dal) GetFlower(id string) (*persistency.Flower, error) {
 	var flower persistency.Flower
 
 	// Scan the result into the flower instance
-	err := row.Scan(&flower.ID, &flower.Name, &flower.NumOfFlowersInPackage)
+	err := row.Scan(&flower.ID, &flower.Name)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, fmt.Errorf("flower with ID %s does not exist", id)

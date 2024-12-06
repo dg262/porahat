@@ -51,9 +51,6 @@
 
     <changeSet author="DanielG" id="4">
         <createTable tableName="flower_package_options">
-            <column name="id" type="uuid">
-                <constraints primaryKey="true"/>
-            </column>
             <column name="flower_id" type="uuid">
                 <constraints nullable="false"/>
             </column>
@@ -62,17 +59,19 @@
             </column>
             <column name="price" type="int">
                 <constraints nullable="false"/>
+            </column>
         </createTable>
 
         <!-- Add unique constraint for FlowerPackageOptions -->
         <addUniqueConstraint
             tableName="flower_package_options"
-            columnNames="flower_id"
+            columnNames="flower_id, num_of_flowers"
             constraintName="unique_flower_num"/>
 
         <!-- Add index on flower_id for better performance -->
         <createIndex indexName="idx_flower_id" tableName="flower_package_options">
             <column name="flower_id"/>
+        </createIndex>
     </changeSet>
 
     <changeSet author="DanielG" id="5">
@@ -188,5 +187,6 @@
             referencedColumnNames="id"
             onDelete="CASCADE"
             constraintName="fk_flower_package_options_flower"/>
+    </changeSet>
 
 </databaseChangeLog>
