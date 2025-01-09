@@ -91,9 +91,10 @@ type EditProductsInEventRequest struct {
 	Products *[]ProductInEvent
 }
 
-type GetFlowersInEventResponse struct {
-	FlowerID      string
-	NumOfFlowers  int
-	NumOfPackages int
-	RemindFlowers int
+type FlowersPackagesResponse struct {
+	FlowerID              string
+	FlowerName            string
+	NumOfFlowersInPackage int
+	NumOfPackages         int
+	Price                 float64
 }

@@ -118,8 +118,8 @@ func defineRoutes(app *fiber.App, service *servicecore.ServiceCore) {
 		return editProductsInEvent(c, service)
 	})
 
-	// app.Get("/event/flowers/:eventID", func(c *fiber.Ctx) error {
-	// 	return getFlowersInEvent(c, service)
-	// })
+	app.Get("/event/flowers/:eventID", func(c *fiber.Ctx) error {
+		return getFlowersInEvent(c, service)
+	})
 
 }
