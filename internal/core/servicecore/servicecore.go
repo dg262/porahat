@@ -3,6 +3,7 @@ package servicecore
 import (
 	"flower-management/contracts"
 	persistency "flower-management/internal/persistency/contracts"
+	"sort"
 )
 
 type ServiceCore struct {
@@ -186,47 +187,109 @@ func (s *ServiceCore) EditProductsInEvent(req *contracts.AddProductsToEventReque
 	return s.DalInstance.EditProductsInEvent(req)
 }
 
-// func (s *ServiceCore) GetFlowersInEvent(eventID string) ([]*contracts.GetFlowersInEventResponse, error) {
-// 	// check if the event exists
-// 	_, err := s.DalInstance.GetEvent(eventID)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+func (s *ServiceCore) GetFlowersInEvent(eventID string) ([]*contracts.FlowersPackagesResponse, error) {
+	// check if the event exists
+	if _, err := s.DalInstance.GetEvent(eventID); err != nil {
+		return nil, err
+	}
 
-// 	products, err := s.DalInstance.GetProductsFromEvent(eventID)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	products, err := s.DalInstance.GetProductsFromEvent(eventID)
+	if err != nil {
+		return nil, err
+	}
 
-// 	var flowersInEvent = make(map[string]int)
+	flowersInEvent := make(map[string]int)
+	for _, product := range products {
+		flowers, err := s.DalInstance.GetFlowersFromProduct(product.ProductID)
+		if err != nil {
+			return nil, err
+		}
+		for _, flower := range flowers {
+			flowersInEvent[flower.FlowerID] += flower.NumOfFlowers
+		}
+	}
 
-// 	for _, product := range products {
-// 		flowers, err := s.DalInstance.GetFlowersFromProduct(product.ProductID)
-// 		if err != nil {
-// 			return nil, err
-// 		}
+	var response []*contracts.FlowersPackagesResponse
+	for flowerID, numOfFlowers := range flowersInEvent {
+		flower, err := s.DalInstance.GetFlower(flowerID)
+		if err != nil {
+			return nil, err
+		}
+		packingOptions, err := s.DalInstance.GetFlowerPackingOptions(flowerID)
+		if err != nil {
+			return nil, err
+		}
 
-// 		for _, flower := range flowers {
-// 			flowersInEvent[flower.FlowerID] = flower.NumOfFlowers
-// 		}
-// 	}
+		// sort the packing options by count of flowers
+		sort.Slice(packingOptions, func(i, j int) bool {
+			return packingOptions[i].NumOfFlowers > packingOptions[j].NumOfFlowers
+		})
 
-// 	var response []*contracts.GetFlowersInEventResponse
-// 	for flowerID, numOfFlowers := range flowersInEvent {
-// 		flower, err := s.DalInstance.GetFlower(flowerID)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		numOfPackages := numOfFlowers / flower.NumOfFlowersInPackage
-// 		remindFlowers := numOfFlowers % flower.NumOfFlowersInPackage
-// 		response = append(response, &contracts.GetFlowersInEventResponse{
-// 			FlowerID:      flowerID,
-// 			NumOfFlowers:  numOfFlowers,
-// 			NumOfPackages: numOfPackages,
-// 			RemindFlowers: remindFlowers,
-// 		})
-// 	}
+		res := calcBestOption(numOfFlowers, packingOptions)
+		for numOfFlowersInPackage, numOfPackages := range res {
+			response = append(response, &contracts.FlowersPackagesResponse{
+				FlowerID:              flowerID,
+				FlowerName:            flower.Name,
+				NumOfFlowersInPackage: numOfFlowersInPackage,
+				NumOfPackages:         numOfPackages,
+				Price:                 getPriceFromNumOfFlowers(numOfFlowersInPackage, packingOptions),
+			})
+		}
 
-// 	return response, nil
+	}
 
-// }
+	return response, nil
+}
+
+func calcBestOption(numOfFlowers int, packingOptions []*persistency.FlowerPackageOptions) map[int]int {
+	for {
+		results := make(map[int]int)
+		if numOfFlowers == 0 {
+			break
+		}
+		for i := 0; i < len(packingOptions); i++ {
+			numOfPackages := numOfFlowers / packingOptions[i].NumOfFlowers
+			remindFlowers := numOfFlowers % packingOptions[i].NumOfFlowers
+			if numOfPackages != 0 {
+				results[packingOptions[i].NumOfFlowers] = numOfPackages
+			}
+			if remindFlowers != 0 && i < len(packingOptions)-1 {
+				optinalResults := calcBestOption(remindFlowers, packingOptions[i+1:])
+				for numOfFlowersInPackage, numOfPackagesRes := range results {
+					optinalResults[numOfFlowersInPackage] += numOfPackagesRes
+				}
+				var optinalPrice float64
+				for numOfFlowersInPackage, numOfPackagesRes := range optinalResults {
+					optinalPrice += getPriceFromNumOfFlowers(numOfFlowersInPackage, packingOptions) * float64(numOfPackagesRes)
+				}
+				results[packingOptions[i].NumOfFlowers]++
+				var price float64
+				for numOfFlowersInPackage, numOfPackagesRes := range results {
+					price += getPriceFromNumOfFlowers(numOfFlowersInPackage, packingOptions) * float64(numOfPackagesRes)
+				}
+				if price < optinalPrice {
+					return results
+				} else {
+					return optinalResults
+				}
+
+			} else if remindFlowers == 0 {
+				results[packingOptions[i].NumOfFlowers] = numOfPackages
+				return results
+			} else {
+				results[packingOptions[i].NumOfFlowers] = numOfPackages + 1
+				return results
+			}
+		}
+	}
+	return nil
+}
+
+func getPriceFromNumOfFlowers(numOfFlowers int, packingOptions []*persistency.FlowerPackageOptions) float64 {
+	for _, option := range packingOptions {
+		if option.NumOfFlowers == numOfFlowers {
+			return option.Price
+		}
+	}
+	return 0
+}

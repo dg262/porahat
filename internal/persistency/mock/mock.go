@@ -211,3 +211,7 @@ func (d *DalMock) GetProductsFromEvent(eventID string) ([]*persistency.EventProd
 func (d *DalMock) GetFlowersFromProduct(productID string) ([]*persistency.FlowerInProduct, error) {
 	return nil, nil
 }
+
+func (d *DalMock) GetFlowerPackingOptions(flowerID string) ([]*persistency.FlowerPackageOptions, error) {
+	return nil, nil
+}

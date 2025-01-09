@@ -377,7 +377,7 @@ func (d *Dal) GetFilteredEvents(req *contracts.GetFilteredEventsRequest) ([]*per
 }
 
 func (d *Dal) GetFlower(id string) (*persistency.Flower, error) {
-	query := "SELECT id, name, num_of_flowers_in_package FROM flowers WHERE id = $1"
+	query := "SELECT id, name FROM flowers WHERE id = $1"
 
 	// Execute the query
 	row := d.pool.QueryRow(context.Background(), query, id)
@@ -490,7 +490,7 @@ func (d *Dal) AddProductsToEvent(req *contracts.AddProductsToEventRequest) error
 
 		// Construct the SQL query
 		query := fmt.Sprintf(
-			"INSERT INTO products_in_events (%s) VALUES (%s)",
+			"INSERT INTO event_product (%s) VALUES (%s)",
 			parameterEnumerator.GetColumns(),
 			parameterEnumerator.GetParameters(),
 		)
@@ -636,4 +636,32 @@ func (d *Dal) GetFlowersFromProduct(productID string) ([]*persistency.FlowerInPr
 	}
 
 	return FlowersInProduct, nil
+}
+
+func (d *Dal) GetFlowerPackingOptions(flowerID string) ([]*persistency.FlowerPackageOptions, error) {
+	query := `SELECT flower_id, num_of_flowers, price FROM flower_package_options WHERE flower_id = $1`
+
+	rows, err := d.pool.Query(context.Background(), query, flowerID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get flower packing options: %w", err)
+	}
+	defer rows.Close()
+
+	var FlowerPackageOptions []*persistency.FlowerPackageOptions
+
+	// Scan the results into a slice of FlowerPackageOptions
+	for rows.Next() {
+		var flowerPackageOption persistency.FlowerPackageOptions
+		if err := rows.Scan(&flowerPackageOption.FlowerID, &flowerPackageOption.NumOfFlowers, &flowerPackageOption.Price); err != nil {
+			return nil, fmt.Errorf("failed to scan FlowerPackageOptions: %w", err)
+		}
+		FlowerPackageOptions = append(FlowerPackageOptions, &flowerPackageOption)
+	}
+
+	// Check for errors from iterating over rows
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error occurred while iterating over flower packing options: %w", err)
+	}
+
+	return FlowerPackageOptions, nil
 }

@@ -17,7 +17,6 @@ type FlowerInProduct struct {
 }
 
 type FlowerPackageOptions struct {
-	ID           string
 	FlowerID     string
 	NumOfFlowers int
 	Price        float64
@@ -67,4 +66,5 @@ type DalInterface interface {
 	EditProductsInEvent(req *contracts.AddProductsToEventRequest) error
 	GetProductsFromEvent(eventID string) ([]*EventProduct, error)
 	GetFlowersFromProduct(productID string) ([]*FlowerInProduct, error)
+	GetFlowerPackingOptions(flowerID string) ([]*FlowerPackageOptions, error)
 }
