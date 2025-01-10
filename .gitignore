@@ -1,0 +1,26 @@
+# Ignore Node.js files in frontend
+frontend/node_modules/
+frontend/.env
+frontend/.vscode/
+frontend/build/
+frontend/dist/
+frontend/yarn-error.log
+
+# Ignore Node.js files in backend (if applicable)
+backend/node_modules/
+backend/.env
+backend/.vscode/
+backend/build/
+backend/dist/
+
+# Ignore general OS files
+.DS_Store
+Thumbs.db
+
+# Ignore log files
+npm-debug.log
+yarn-error.log
+
+# Ignore IDE configuration files (if necessary)
+.idea/
+.vscode/
